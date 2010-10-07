@@ -15,68 +15,68 @@ COUNTDOWN=15
 
 # Data Models
 class Application(db.Model):
-    name = db.StringProperty(required=True)
-    url = db.StringProperty(required=True)
-    addedBy = db.UserProperty(required=True)
-    
-    
+	name = db.StringProperty(required=True)
+	url = db.StringProperty(required=True)
+	addedBy = db.UserProperty(required=True)
+	
+	
 class AppStatus(db.Model):
-    app = db.ReferenceProperty(Application)
-    status = db.StringProperty(required=True, choices=set(["UP", "DOWN", "WARNING"]))
-    message = db.StringProperty(default="")
-    date = db.DateProperty()
+	app = db.ReferenceProperty(Application)
+	status = db.StringProperty(required=True, choices=set(["UP", "DOWN", "WARNING"]))
+	message = db.StringProperty(default="")
+	date = db.DateProperty()
 
 # Business Logic
-class modelFacade():
-    def addApplication(self, name, url):
+class ModelFacade():
+	def addApplication(self, name, url):
 		logging.info("Adding application %s : %s"%(name,url))
-        user = users.get_current_user() 
-        if user:
-        	app = Application(name=name, url=url, addedBy=user)
-        	app.put()
-
-    def monitorApps(self, cursor=None):
-        batch_size = 5
-
-        query = Application.all()
-        if cursor: 
-            query.with_cursor(cursor)
-
-        apps = Application.all().fetch(5)
-        
-        for app in apps:
-        	logging.info("Checking %s's status"%app.name)
-            appStatus = None
-            try:
-                result = urlfetch.fetch(app.url)
-                if result.status_code == 200:
-                    appStatus = AppStatus(app = app, status = "UP")
-                else:
-                    appStatus = AppStatus(app = app, status = "WARNING", message = "Status code " + result.status_code)
-            except InvalidURLError:
-            	logging.error("Unable to check %s's status: Invalid URL!"%app.name)
-                appStatus =  AppStatus(app = app, status = "DOWN", message = "Invalid URL!")
-            except DownloadError:
-            	logging.error("Unable to check %s's status: Application not answer!"%app.name)
-                appStatus =  AppStatus(app = app, status = "DOWN", message = "Application not answer!")
-                
-            appStatus.put()
-        
-        if len(apps) > batch_size:
-            taskqueue.add(url='/monitor', method='POST', params={'cursor': query.cursor()})
-    
-        taskqueue.add(url='/monitor', method='POST', countdown=COUNTDOWN*60)
-
-    def getAppStatus(self):
-    	logging.info("Loading applications status")
-        apps = Application.all().order("name")
-        status = []
-        
-        for app in apps:
-            query = AppStatus.all()
-            query.filter("app =", app.key())
-            query.sort("date")
-            appStatus = query.fetch(1)
-            appStatus.appName = app.name
-            status.append(appStatus)
-	return status
+		user = users.get_current_user() 
+		if user:
+			app = Application(name=name, url=url, addedBy=user)
+			app.put()
+	def monitorApps(self, cursor=None):
+		batch_size = 5
+		query = Application.all()
+		if cursor: 
+			query.with_cursor(cursor)
+		apps = query.fetch(batch_size)
+		logging.debug("Will now check status for %d applications."%len(apps))
+		#check apps status		
+		for app in apps:
+			logging.info("Checking %s's status"%app.name)
+			appStatus = None
+			try:
+				result = urlfetch.fetch(app.url)
+				if result.status_code == 200:
+					appStatus = AppStatus(status = "UP")
+				else:
+					appStatus = AppStatus(status = "WARNING", message = "Status code " + result.status_code)
+			except InvalidURLError:
+				logging.error("Unable to check %s's status: Invalid URL!"%app.name)
+				appStatus =  AppStatus(status = "DOWN", message = "Invalid URL!")
+			except DownloadError:
+				logging.error("Unable to check %s's status: Application not answer!"%app.name)
+				appStatus =  AppStatus(status = "DOWN", message = "Application not answer!")
+			#save status
+			appStatus.app = app.key()
+			appStatus.put()
+		#check other apps if necessary
+		if len(apps) > batch_size:
+			taskqueue.add(url='/monitor', method='POST', params={'cursor': query.cursor()})
+		#enqueue periodic check
+		taskqueue.add(url='/monitor', method='POST', countdown=COUNTDOWN*60)
+		
+	def getAppStatus(self):
+		logging.info("Loading applications status")
+		apps = Application.all().order("name")
+		status = []	
+		for app in apps:
+			query = AppStatus.all()
+			query.filter("app =", app.key())
+			query.order("date")
+			results = query.fetch(1)
+			if len(results) ==1:
+				appStatus = results.pop()
+				status.append(appStatus)
+		return status
+	

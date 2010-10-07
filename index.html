@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Octahedron Applications' Status</title>
+		<link rel="stylesheet" href="style.css" type="text/css" />
+	</head>
+	<body>
+		<header><h1>Applications' Status</h1></header>
+		<nav>
+			<ul>
+			    <li><a href="http://www.octahedron.com.br">Octahedron</a></li>
+			    <li><a href="/">Applications' Status</a></li>
+			    <li><a href="/register">Add Application</a></nav></li>
+			</ul>
+		</nav>
+		{% if failed %}
+		<section>
+			<h1>The following applications needs attention</h1>
+			<ul>
+				{% for app in failed %}
+				<li>{{app}}</li>
+				{% endfor %}
+			</ul>
+		</section>
+		{% endif %}
+   		<section>
+   			<header>
+	   			<ul>
+					<li><h1>Application</h1></li>
+					<li><h1>Status</h1></li>
+					<li><h1>Date</h1></li>
+					<li><h1>Message</h1></li>
+				</ul>
+			</header>
+			{% for app in failed %}
+			<article>
+				<ul>
+					<li>{{app.app.name}}</li>
+					<li>{{app.status}}</li>
+					<li>{{app.date}}</li>
+					<li>{{app.message}}</li>
+				</ul>
+	  		</article>
+	  		{% endfor %}
+   		</section>
+  		<footer>
+			<p>2010 <a href="http://www.octahedron.com.br">Octahedron</a>.</p>
+		</footer>
+	</body>
+</html>

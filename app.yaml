@@ -6,3 +6,9 @@ api_version: 1
 handlers:
 - url: /.*
   script: handlers.py
+  
+admin_console:
+pages:
+- name: Add Application
+  url: /register
+

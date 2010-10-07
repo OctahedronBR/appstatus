@@ -1,8 +1,9 @@
 '''
 Created on 29/09/2010
 
-@author: danilo
+@author: Danilo Penna Queiroz
 '''
+import logging
 from google.appengine.ext import db
 from google.appengine.api import users
 from google.appengine.api.labs import taskqueue
@@ -28,9 +29,11 @@ class AppStatus(db.Model):
 # Business Logic
 class modelFacade():
     def addApplication(self, name, url):
+		logging.info("Adding application %s : %s"%(name,url))
         user = users.get_current_user() 
-        app = Application(name=name, url=url, addedBy=user)
-        app.put()
+        if user:
+        	app = Application(name=name, url=url, addedBy=user)
+        	app.put()
 
     def monitorApps(self, cursor=None):
         batch_size = 5
@@ -42,6 +45,7 @@ class modelFacade():
         apps = Application.all().fetch(5)
         
         for app in apps:
+        	logging.info("Checking %s's status"%app.name)
             appStatus = None
             try:
                 result = urlfetch.fetch(app.url)
@@ -50,8 +54,10 @@ class modelFacade():
                 else:
                     appStatus = AppStatus(app = app, status = "WARNING", message = "Status code " + result.status_code)
             except InvalidURLError:
+            	logging.error("Unable to check %s's status: Invalid URL!"%app.name)
                 appStatus =  AppStatus(app = app, status = "DOWN", message = "Invalid URL!")
             except DownloadError:
+            	logging.error("Unable to check %s's status: Application not answer!"%app.name)
                 appStatus =  AppStatus(app = app, status = "DOWN", message = "Application not answer!")
                 
             appStatus.put()
@@ -62,6 +68,7 @@ class modelFacade():
         taskqueue.add(url='/monitor', method='POST', countdown=COUNTDOWN*60)
 
     def getAppStatus(self):
+    	logging.info("Loading applications status")
         apps = Application.all().order("name")
         status = []
         
@@ -72,4 +79,4 @@ class modelFacade():
             appStatus = query.fetch(1)
             appStatus.appName = app.name
             status.append(appStatus)
-                
+	return status

@@ -21,8 +21,8 @@ class Application(db.Model):
 	
 	
 class AppStatus(db.Model):
-	app = db.ReferenceProperty(Application)
-	status = db.StringProperty(required=True, choices=set(["UP", "DOWN", "WARNING"]))
+	application = db.StringProperty(required=True)
+	status = db.StringProperty(choices=set(["UP", "DOWN", "WARNING"]), default = "DOWN")
 	message = db.StringProperty(default="")
 	date = db.DateProperty()
 
@@ -44,21 +44,23 @@ class ModelFacade():
 		#check apps status		
 		for app in apps:
 			logging.info("Checking %s's status"%app.name)
-			appStatus = None
+			appStatus = AppStatus(application = app.name)
 			try:
 				result = urlfetch.fetch(app.url)
 				if result.status_code == 200:
-					appStatus = AppStatus(status = "UP")
+					appStatus.status = "UP"
 				else:
-					appStatus = AppStatus(status = "WARNING", message = "Status code " + result.status_code)
+					appStatus.status = "WARNING"
+					appStatus.message = "Status code " + result.status_code
 			except InvalidURLError:
 				logging.error("Unable to check %s's status: Invalid URL!"%app.name)
-				appStatus =  AppStatus(status = "DOWN", message = "Invalid URL!")
+				appStatus.status = "DOWN"
+				appStatus.message = "Invalid URL!"
 			except DownloadError:
 				logging.error("Unable to check %s's status: Application not answer!"%app.name)
-				appStatus =  AppStatus(status = "DOWN", message = "Application not answer!")
+				appStatus.status = "DOWN"
+				appStatus.message = "Application not answer!"
 			#save status
-			appStatus.app = app.key()
 			appStatus.put()
 		#check other apps if necessary
 		if len(apps) > batch_size:
@@ -72,7 +74,7 @@ class ModelFacade():
 		status = []	
 		for app in apps:
 			query = AppStatus.all()
-			query.filter("app =", app.key())
+			query.filter("application =", app.name)
 			query.order("date")
 			results = query.fetch(1)
 			if len(results) ==1:

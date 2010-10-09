@@ -43,8 +43,7 @@ class ShowStatus(webapp.RequestHandler):
 
 class Monitor(webapp.RequestHandler):
 	def get(self):
-		if users.is_current_user_admin():
-			model.monitorApps(self.request.get('cursor'))
+		model.monitorApps(self.request.get('cursor'))
 			
 # Application entry point
 application = webapp.WSGIApplication(

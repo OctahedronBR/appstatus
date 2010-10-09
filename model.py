@@ -49,7 +49,7 @@ class ModelFacade():
 		apps = query.fetch(batch_size)
 		#check other apps if necessary
 		if len(apps) == batch_size:
-			taskqueue.add(url='/monitor', method='POST', params={'cursor': query.cursor()})
+			taskqueue.add(url='/task/monitor', method='POST', params={'cursor': query.cursor()})
 		return apps
 		
 	def monitorApps(self, cursor=None):

@@ -33,10 +33,10 @@
 					<li><h1>Message</h1></li>
 				</ul>
 			</header>
-			{% for app in failed %}
+			{% for app in status %}
 			<article>
 				<ul>
-					<li>{{app.app.name}}</li>
+					<li>{{app.application}}</li>
 					<li>{{app.status}}</li>
 					<li>{{app.date}}</li>
 					<li>{{app.message}}</li>

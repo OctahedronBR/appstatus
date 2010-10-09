@@ -44,21 +44,17 @@ class ShowStatus(webapp.RequestHandler):
 class Monitor(webapp.RequestHandler):
 	def get(self):
 		if users.is_current_user_admin():
-			model.monitorApps()
-	def post(self):
-		model.monitorApps(self.request.get('cursor'))
-		self.redirect("/")
-        
+			model.monitorApps(self.request.get('cursor'))
+			
 # Application entry point
 application = webapp.WSGIApplication(
                                      [('/', ShowStatus), 
-                                      ('/monitor', Monitor), 
+                                      ('/task/monitor', Monitor), 
                                       ('/register', RegisterApp)], 
                                       debug=True)
 
 
 def main():
-	model.monitorApps()
 	run_wsgi_app(application)
 
 if __name__ == "__main__":

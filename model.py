@@ -94,7 +94,7 @@ class ModelFacade():
 			logging.info("Check status for app %s" % app.name)
 			query = AppStatus.all()
 			query.filter("application =", app.name)
-			query.order("date")
+			query.order("-date")
 			result = query.get()
 			if result:
 				logging.debug("Status found for application %s" % app.name)

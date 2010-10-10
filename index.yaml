@@ -1,0 +1,8 @@
+indexes:
+
+- kind: AppStatus
+  properties:
+  - name: application
+  - name: date
+    direction: desc
+

@@ -4,9 +4,22 @@ runtime: python
 api_version: 1
 
 handlers:
+- url: /images
+  static_dir: images
+- url: /images/(.*)
+  static_files: images/\1
+  upload: images/(.*)
+
+- url: /css
+  static_dir: css
+
+- url: /css/(.*)
+  static_files: css/\1
+  upload: css/(.*)
+
 - url: /.*
   script: handlers.py
-  
+
 admin_console:
  pages:
  - name: Add Application

@@ -18,7 +18,7 @@ class Application(db.Model):
 	
 	
 class AppStatus(db.Model):
-	application = db.StringProperty(required=True)
+	application = db.ReferenceProperty(Application, collection_name="status")
 	status = db.StringProperty(choices=set(["UP", "DOWN", "WARNING"]), default = "DOWN")
 	message = db.StringProperty(default="")
 	date = db.DateTimeProperty(auto_now_add=True)
@@ -65,7 +65,7 @@ class ModelFacade():
 		#check apps status		
 		for app in apps:
 			logging.info("Checking %s's status"%app.name)
-			appStatus = AppStatus(application = app.name)
+			appStatus = AppStatus(application = app)
 			try:
 				result = urlfetch.fetch(app.url)
 				if result.status_code == 200:
@@ -92,10 +92,7 @@ class ModelFacade():
 		status = []
 		for app in apps:
 			logging.info("Check status for app %s" % app.name)
-			query = AppStatus.all()
-			query.filter("application =", app.name)
-			query.order("-date")
-			result = query.get()
+			result = app.status.order("-date").get()
 			if result:
 				logging.debug("Status found for application %s" % app.name)
 				status.append(result)

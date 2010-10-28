@@ -25,3 +25,6 @@ admin_console:
  - name: Add Application
    url: /register
 
+builtins:
+- datastore_admin: on
+- appstats: on
